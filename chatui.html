@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Anyone Social — Chat UI</title>
+  <meta name="description" content="Professional, responsive chat UI for Anyone Social Media — single-file HTML/CSS/JS" />
+  <style>
+    /* =====================
+       Variables & Reset
+       ===================== */
+    :root{
+      --bg:#f5f7fb; --card:#ffffff; --muted:#7b8a99; --accent:#4f46e5; --accent-2:#06b6d4; --success:#10b981;
+      --me:#eaf2ff; --other:#ffffff; --radius:12px; --shadow:0 6px 20px rgba(39,47,63,0.07);
+      --glass: rgba(255,255,255,0.6);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:#12263f}
+    img{max-width:100%;display:block}
+
+    /* =====================
+       Layout
+       ===================== */
+    .app{
+      max-width:1200px;margin:28px auto;padding:18px;display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:stretch;
+    }
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+
+    /* Sidebar */
+    .sidebar{display:flex;flex-direction:column;height:78vh}
+    .sidebar-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #eef2f6}
+    .brand{display:flex;gap:12px;align-items:center}
+    .avatar-sm{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    .brand h1{font-size:16px;margin:0}
+    .brand small{display:block;color:var(--muted);font-size:12px}
+    .search{padding:12px;border-bottom:1px solid #eef2f6}
+    .search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e6edf3;background:#f8fafc}
+
+    .contacts{overflow:auto;padding:12px;height:calc(78vh - 136px)}
+    .contact{display:flex;gap:12px;padding:10px;border-radius:10px;align-items:center;cursor:pointer}
+    .contact:hover{background:#fbfdff}
+    .contact.active{background:linear-gradient(90deg,#f3f6ff,#ffffff)}
+    .contact .meta{flex:1;min-width:0}
+    .contact h4{margin:0;font-size:14px}
+    .contact p{margin:2px 0 0;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .badge{background:var(--accent);color:white;padding:4px 8px;border-radius:999px;font-size:12px}
+
+    /* Chat area */
+    .chat{display:flex;flex-direction:column;height:78vh}
+    .chat-header{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #eef2f6}
+    .chat-header h3{margin:0}
+    .chat-body{flex:1;padding:22px;overflow:auto;background:linear-gradient(180deg, #f8fbff 0%, #fbfdff 100%)}
+
+    .messages{display:flex;flex-direction:column;gap:10px;max-width:820px}
+    .message{display:flex;gap:10px;align-items:flex-end}
+    .message.me{flex-direction:row-reverse}
+    .bubble{padding:10px 14px;border-radius:14px;max-width:72%;box-shadow:0 4px 10px rgba(12,18,29,0.04);font-size:14px}
+    .bubble.me{background:var(--me);border-bottom-right-radius:6px}
+    .bubble.other{background:var(--other);border-bottom-left-radius:6px}
+    .bubble small{display:block;color:var(--muted);font-size:11px;margin-top:6px}
+    .avatar{width:36px;height:36px;border-radius:10px;background:#dde8ff;display:flex;align-items:center;justify-content:center;font-weight:700;color:#234}
+
+    .chat-footer{padding:14px 18px;border-top:1px solid #eef2f6;display:flex;gap:10px;align-items:center}
+    .input{flex:1;display:flex;gap:8px;align-items:center}
+    .input textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #e6edf3;resize:none;height:48px;font-size:14px}
+    .controls{display:flex;gap:8px}
+    .btn{background:var(--accent);color:white;padding:10px 14px;border-radius:10px;border:none;cursor:pointer}
+    .btn.secondary{background:#f3f6ff;color:var(--accent);border:1px solid #e6edf3}
+
+    /* Typing indicator */
+    .typing{display:inline-flex;gap:4px;align-items:center}
+    .dot{width:6px;height:6px;border-radius:50%;background:#d1d5db;animation:blink 1s infinite}
+    .dot:nth-child(2){animation-delay:0.15s}
+    .dot:nth-child(3){animation-delay:0.3s}
+    @keyframes blink{50%{opacity:0.2}} 
+
+    /* Responsive */
+    @media (max-width:880px){
+      .app{grid-template-columns:1fr;padding:12px}
+      .sidebar{order:2;height:auto}
+      .chat{order:1}
+    }
+
+    /* Small helpers */
+    .muted{color:var(--muted)}
+    .flex{display:flex}
+    .center{align-items:center;justify-content:center}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar / Contacts -->
+    <aside class="card sidebar" aria-label="Contacts">
+      <div class="sidebar-header">
+        <div class="brand">
+          <div class="avatar-sm">AS</div>
+          <div>
+            <h1>Anyone Social</h1>
+            <small class="muted">Connect with anyone</small>
+          </div>
+        </div>
+        <div>
+          <button class="btn secondary" id="newChatBtn" title="New chat">New</button>
+        </div>
+      </div>
+
+      <div class="search">
+        <input id="contactSearch" placeholder="Search people or messages" aria-label="Search contacts" />
+      </div>
+
+      <div class="contacts" id="contactsList" role="list">
+        <!-- Contacts rendered by JS -->
+      </div>
+    </aside>
+
+    <!-- Chat -->
+    <main class="card chat" aria-live="polite">
+      <header class="chat-header">
+        <div class="flex" style="gap:12px;align-items:center">
+          <div class="avatar" id="chatAvatar">JD</div>
+          <div>
+            <h3 id="chatName">Jaswanth</h3>
+            <small id="chatStatus" class="muted">Online</small>
+          </div>
+        </div>
+        <div style="margin-left:auto" class="muted">Last seen: <span id="lastSeen">2:14 PM</span></div>
+      </header>
+
+      <section class="chat-body" id="chatBody">
+        <div class="messages" id="messages" aria-label="Message list">
+          <!-- Messages rendered by JS -->
+        </div>
+      </section>
+
+      <footer class="chat-footer">
+        <div class="input">
+          <textarea id="messageInput" placeholder="Write a message..." aria-label="Write a message"></textarea>
+        </div>
+        <div class="controls">
+          <button class="btn secondary" id="emojiBtn" title="Emoji">😊</button>
+          <input type="file" id="fileInput" style="display:none" />
+          <button class="btn secondary" id="attachBtn" title="Attach file">📎</button>
+          <button class="btn" id="sendBtn" title="Send">Send</button>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    /* =====================
+       Sample Data
+       ===================== */
+    const contacts = [
+      {id:1,name:'Jaswanth CT',msg:'Hey — loving your profile!',time:'10:12 AM',avatar:'JD',unread:2,status:'online'},
+      {id:2,name:'Ravi Kumar',msg:'Sent the files.',time:'9:48 AM',avatar:'RK',unread:0,status:'offline'},
+      {id:3,name:'Aisha Patel',msg:'Let\'s do a quick call.',time:'Yesterday',avatar:'AP',unread:0,status:'online'},
+      {id:4,name:'Team Updates',msg:'Weekly report uploaded.',time:'Mon',avatar:'TU',unread:3,status:'online'}
+    ];
+
+    const chatHistory = {
+      1:[
+        {from:'other',text:'Hey! Welcome to Anyone Social. How are you?',t:'10:10 AM'},
+        {from:'me',text:'I\'m great — excited to be here! 😊',t:'10:11 AM'},
+        {from:'other',text:'Awesome. Want to join the group chat later?',t:'10:12 AM'}
+      ],
+      2:[{from:'other',text:'Files uploaded to drive.',t:'9:45 AM'}],
+      3:[],4:[]
+    };
+
+    /* =====================
+       DOM & Rendering
+       ===================== */
+    const contactsList = document.getElementById('contactsList');
+    const messagesEl = document.getElementById('messages');
+    const chatName = document.getElementById('chatName');
+    const chatAvatar = document.getElementById('chatAvatar');
+    const chatStatus = document.getElementById('chatStatus');
+    const lastSeen = document.getElementById('lastSeen');
+
+    let activeContact = contacts[0].id;
+
+    function renderContacts(filter=''){
+      contactsList.innerHTML='';
+      const list = contacts.filter(c=> (c.name+c.msg).toLowerCase().includes(filter.toLowerCase()));
+      list.forEach(c=>{
+        const el = document.createElement('div');
+        el.className='contact'+(c.id===activeContact? ' active':'');
+        el.tabIndex=0; el.role='listitem';
+        el.innerHTML = `
+          <div class="avatar">${c.avatar}</div>
+          <div class="meta">
+            <h4>${c.name}</h4>
+            <p>${c.msg}</p>
+          </div>
+          <div style="text-align:right">
+            ${c.unread?`<div class="badge">${c.unread}</div>`:`<small class="muted">${c.time}</small>`}
+          </div>
+        `;
+        el.addEventListener('click', ()=> selectContact(c.id));
+        contactsList.appendChild(el);
+      })
+    }
+
+    function renderMessages(){
+      const list = chatHistory[activeContact] || [];
+      messagesEl.innerHTML = '';
+      list.forEach(m=> messagesEl.appendChild(makeMessageEl(m)));
+      // scroll to bottom
+      setTimeout(()=> document.getElementById('chatBody').scrollTop = document.getElementById('chatBody').scrollHeight, 10);
+    }
+
+    function makeMessageEl(m){
+      const wrapper = document.createElement('div');
+      wrapper.className = 'message ' + (m.from==='me' ? 'me' : 'other');
+      const avatar = document.createElement('div'); avatar.className='avatar'; avatar.textContent = m.from==='me'? 'You' : (contacts.find(c=>c.id===activeContact)?.avatar || 'U');
+      const bubble = document.createElement('div'); bubble.className='bubble ' + (m.from==='me'? 'me':'other');
+      bubble.innerHTML = `<div>${escapeHtml(m.text)}</div><small>${m.t}</small>`;
+      wrapper.appendChild(avatar);
+      wrapper.appendChild(bubble);
+      return wrapper;
+    }
+
+    function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function selectContact(id){
+      activeContact = id;
+      const c = contacts.find(x=>x.id===id);
+      chatName.textContent = c.name;
+      chatAvatar.textContent = c.avatar;
+      chatStatus.textContent = c.status==='online' ? 'Online' : 'Last seen recently';
+      c.unread = 0;
+      renderContacts(document.getElementById('contactSearch').value);
+      renderMessages();
+    }
+
+    // Search
+    document.getElementById('contactSearch').addEventListener('input', (e)=> renderContacts(e.target.value));
+
+    // Initial render
+    renderContacts(); selectContact(activeContact);
+
+    /* =====================
+       Sending Messages
+       ===================== */
+    const input = document.getElementById('messageInput');
+    document.getElementById('sendBtn').addEventListener('click', sendMessage);
+    input.addEventListener('keydown',(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
+
+    function sendMessage(){
+      const txt = input.value.trim();
+      if(!txt) return;
+      const msg = {from:'me', text:txt, t: timeNow()};
+      chatHistory[activeContact] = chatHistory[activeContact] || [];
+      chatHistory[activeContact].push(msg);
+      input.value=''; renderMessages();
+      // simulate reply for demo
+      setTimeout(()=> simulateReply(activeContact), 850 + Math.random()*900);
+    }
+
+    function timeNow(){
+      const d = new Date();
+      return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    }
+
+    function simulateReply(contactId){
+      const responses = ['Nice!', 'Thanks for that.', 'I agree.', 'Looks good 👌', 'Let\'s catch up later.'];
+      const r = responses[Math.floor(Math.random()*responses.length)];
+      if(!chatHistory[contactId]) chatHistory[contactId]=[];
+      chatHistory[contactId].push({from:'other',text:r,t:timeNow()});
+      if(contactId===activeContact) renderMessages();
+      else{
+        const c = contacts.find(x=>x.id===contactId);
+        if(c) c.unread = (c.unread||0) + 1; renderContacts(document.getElementById('contactSearch').value);
+      }
+    }
+
+    // Attach file
+    document.getElementById('attachBtn').addEventListener('click', ()=> document.getElementById('fileInput').click());
+    document.getElementById('fileInput').addEventListener('change', (e)=>{
+      const f = e.target.files[0]; if(!f) return;
+      const msg = {from:'me', text:`📎 ${f.name}`, t:timeNow()};
+      chatHistory[activeContact].push(msg); renderMessages(); e.target.value='';
+    });
+
+    // New chat (demo)
+    document.getElementById('newChatBtn').addEventListener('click', ()=>{
+      const id = Date.now();
+      const newContact = {id,name:'New Friend',msg:'Say hi...',time:'Now',avatar:'NF',unread:0,status:'online'};
+      contacts.unshift(newContact);
+      chatHistory[id]=[]; renderContacts(); selectContact(newContact.id);
+    });
+
+    // Quick accessibility: focus on message input
+    input.focus();
+
+    // Example: keyboard shortcut to toggle sidebar (for smaller screens)
+    document.addEventListener('keydown',(e)=>{ if(e.key==='/' && document.activeElement===document.body){ e.preventDefault(); document.getElementById('contactSearch').focus(); } });
+
+    // End of script
+  </script>
+</body>
+</html>
